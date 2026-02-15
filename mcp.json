@@ -1,0 +1,25 @@
+{
+    "mcpServers": {
+        "monarchmoney": {
+            "command": "monarch-mcp-server",
+            "args": [],
+            "env": {
+                "MONARCH_EMAIL": "${MONARCH_EMAIL}",
+                "MONARCH_PASSWORD": "${MONARCH_PASSWORD}",
+                "MONARCH_MFA_SECRET": "${MONARCH_MFA_SECRET}"
+            }
+        },
+        "ticktick": {
+            "command": "ticktick-mcp",
+            "args": [
+                "run"
+            ],
+            "env": {
+                "TICKTICK_CLIENT_ID": "${TICKTICK_CLIENT_ID}",
+                "TICKTICK_CLIENT_SECRET": "${TICKTICK_CLIENT_SECRET}",
+                "TICKTICK_REDIRECT_URI": "${TICKTICK_REDIRECT_URI}",
+                "TICKTICK_ACCESS_TOKEN": "${TICKTICK_ACCESS_TOKEN}"
+            }
+        }
+    }
+}
