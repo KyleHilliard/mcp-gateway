@@ -10,9 +10,13 @@ via Tailscale and LAN IPs (DNS rebinding protection).
 
 import os
 
+import sys
 # Parse Lasso's own CLI args first
 from mcp_gateway.gateway import parse_args, mcp
 import mcp_gateway.gateway as gw
+
+print("DEBUG: VERSION 2026-02-15-FIX-4 - UNBUFFERED", flush=True)
+sys.stdout.flush()
 
 def main():
     gw.cli_args = parse_args()
