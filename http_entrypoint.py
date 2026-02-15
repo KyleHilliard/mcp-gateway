@@ -4,7 +4,8 @@ HTTP entrypoint for Lasso MCP Gateway.
 Imports the Lasso gateway's FastMCP app and runs it with
 Streamable HTTP transport instead of the default stdio.
 
-Host/port configured via FastMCP settings, not run() args.
+Configures TransportSecuritySettings to allow remote access
+via Tailscale and LAN IPs (DNS rebinding protection).
 """
 
 import os
@@ -20,13 +21,36 @@ def main():
     host = os.environ.get("MCP_HOST", "0.0.0.0")
     port = int(os.environ.get("MCP_PORT", "8484"))
 
-    # Set settings on the FastMCP instance
     if hasattr(mcp, 'settings'):
         mcp.settings.host = host
         mcp.settings.port = port
-    elif hasattr(mcp, '_mcp_server_settings'):
-        mcp._mcp_server_settings.host = host
-        mcp._mcp_server_settings.port = port
+
+    # Configure DNS rebinding protection to allow remote access
+    # Tailscale handles authentication; we allow known IPs.
+    try:
+        from mcp.server.transport_security import TransportSecuritySettings
+        mcp._transport_security = TransportSecuritySettings(
+            enable_dns_rebinding_protection=True,
+            allowed_hosts=[
+                "localhost:*",
+                "127.0.0.1:*",
+                "0.0.0.0:*",
+                "100.94.202.54:*",   # Unraid Tailscale IP
+                "10.0.0.37:*",       # Unraid LAN IP
+                "tower:*",           # Unraid hostname
+                "tower.local:*",
+            ],
+            allowed_origins=[
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "http://100.94.202.54:*",
+                "http://10.0.0.37:*",
+                "http://tower:*",
+            ],
+        )
+    except ImportError:
+        # Older SDK version without TransportSecuritySettings — no DNS protection
+        pass
 
     print(f"Starting MCP Gateway (Streamable HTTP) on {host}:{port}")
     mcp.run(transport="streamable-http")
