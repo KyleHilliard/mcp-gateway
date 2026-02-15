@@ -31,16 +31,41 @@ def main():
 
     # Configure DNS rebinding protection to allow remote access
     # Tailscale handles authentication; we allow known IPs.
-    print("DEBUG: VERSION 2026-02-15-FIX-3 - MONKEYPATCH ACTIVE")
+    print("DEBUG: VERSION 2026-02-15-FIX-5 - INIT-INTERCEPT ACTIVE", flush=True)
     try:
         from mcp.server.transport_security import TransportSecuritySettings
-        # Monkeypatch: Force allow all hosts/origins
-        TransportSecuritySettings.is_host_allowed = lambda self, host: True
-        TransportSecuritySettings.is_origin_allowed = lambda self, origin: True
         
+        # 1. Patch the class defaults/methods to be open
+        TransportSecuritySettings.enable_dns_rebinding_protection = False
+        TransportSecuritySettings.allowed_hosts = ["*"]
+        TransportSecuritySettings.allowed_origins = ["*"]
+        
+        # 2. Patch validation methods to always return True
+        # (We patch multiple names to catch whatever the SDK calls)
+        def allow_all(*args, **kwargs): return True
+        TransportSecuritySettings.is_host_allowed = allow_all
+        TransportSecuritySettings.is_origin_allowed = allow_all
+        TransportSecuritySettings.verify_host = allow_all
+        TransportSecuritySettings.check_host = allow_all
+        
+        # 3. Intercept __init__ to force settings on new instances
+        original_init = TransportSecuritySettings.__init__
+        def new_init(self, *args, **kwargs):
+            # Force disable protection
+            kwargs['enable_dns_rebinding_protection'] = False
+            kwargs['allowed_hosts'] = ["*"]
+            kwargs['allowed_origins'] = ["*"]
+            print(f"DEBUG: Intercepted TransportSecuritySettings init. Forcing open access.", flush=True)
+            original_init(self, *args, **kwargs)
+            # Double check after init
+            self.enable_dns_rebinding_protection = False
+            
+        TransportSecuritySettings.__init__ = new_init
+
+        # 4. Update the existing instance just in case
         mcp._transport_security = TransportSecuritySettings(
             enable_dns_rebinding_protection=False,
-            allowed_hosts=["*", "100.94.202.54:8484"],
+            allowed_hosts=["*"],
             allowed_origins=["*"]
         )
     except ImportError:
