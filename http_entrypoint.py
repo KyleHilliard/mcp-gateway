@@ -29,11 +29,16 @@ def main():
     # Tailscale handles authentication; we allow known IPs.
     try:
         from mcp.server.transport_security import TransportSecuritySettings
+        # Monkeypatch: Force allow all hosts/origins (Tailscale handles auth)
+        TransportSecuritySettings.is_host_allowed = lambda self, host: True
+        TransportSecuritySettings.is_origin_allowed = lambda self, origin: True
+        
         mcp._transport_security = TransportSecuritySettings(
-            enable_dns_rebinding_protection=True,
+            enable_dns_rebinding_protection=False,
             allowed_hosts=["*"],
             allowed_origins=["*"]
         )
+        print("DEBUG: DNS Rebinding Protection DISABLED (Monkeypatched)")
     except ImportError:
         # Older SDK version without TransportSecuritySettings — no DNS protection
         pass
