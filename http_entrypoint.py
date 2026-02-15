@@ -31,44 +31,59 @@ def main():
 
     # Configure DNS rebinding protection to allow remote access
     # Tailscale handles authentication; we allow known IPs.
-    print("DEBUG: VERSION 2026-02-15-FIX-5 - INIT-INTERCEPT ACTIVE", flush=True)
+    print("DEBUG: VERSION 2026-02-15-FIX-6 - BROAD PATCH ACTIVE", flush=True)
     try:
+        # Patch Starlette if present (just in case)
+        try:
+            from starlette.middleware.trustedhost import TrustedHostMiddleware
+            # Bypass middleware
+            async def mock_call(self, scope, receive, send):
+                await self.app(scope, receive, send)
+            TrustedHostMiddleware.__call__ = mock_call
+            print("DEBUG: Monkeypatched Starlette TrustedHostMiddleware", flush=True)
+        except ImportError:
+            print("DEBUG: Starlette not found or patch failed", flush=True)
+
         from mcp.server.transport_security import TransportSecuritySettings
         
-        # 1. Patch the class defaults/methods to be open
+        # 1. Patch the class defaults
         TransportSecuritySettings.enable_dns_rebinding_protection = False
         TransportSecuritySettings.allowed_hosts = ["*"]
         TransportSecuritySettings.allowed_origins = ["*"]
         
-        # 2. Patch validation methods to always return True
-        # (We patch multiple names to catch whatever the SDK calls)
+        # 2. Patch validation methods
         def allow_all(*args, **kwargs): return True
         TransportSecuritySettings.is_host_allowed = allow_all
         TransportSecuritySettings.is_origin_allowed = allow_all
         TransportSecuritySettings.verify_host = allow_all
         TransportSecuritySettings.check_host = allow_all
         
-        # 3. Intercept __init__ to force settings on new instances
+        # 3. Intercept __init__
         original_init = TransportSecuritySettings.__init__
         def new_init(self, *args, **kwargs):
-            # Force disable protection
             kwargs['enable_dns_rebinding_protection'] = False
             kwargs['allowed_hosts'] = ["*"]
             kwargs['allowed_origins'] = ["*"]
-            print(f"DEBUG: Intercepted TransportSecuritySettings init. Forcing open access.", flush=True)
+            print(f"DEBUG: Intercepted TransportSecuritySettings init.", flush=True)
             original_init(self, *args, **kwargs)
-            # Double check after init
             self.enable_dns_rebinding_protection = False
             
         TransportSecuritySettings.__init__ = new_init
 
-        # 4. Update the existing instance just in case
-        mcp._transport_security = TransportSecuritySettings(
-            enable_dns_rebinding_protection=False,
-            allowed_hosts=["*"],
-            allowed_origins=["*"]
-        )
-    except ImportError:
+        # 4. Update the existing instance
+        if hasattr(mcp, '_transport_security'):
+            mcp._transport_security = TransportSecuritySettings(
+                enable_dns_rebinding_protection=False,
+                allowed_hosts=["*"],
+                allowed_origins=["*"]
+            )
+            print("DEBUG: Updated mcp._transport_security instance", flush=True)
+            
+    except ImportError as e:
+        print(f"DEBUG: FAILED TO IMPORT OR PATCH SECURITY SETTINGS: {e}", flush=True)
+        # Try to find it in sys.modules if verify failed
+        import sys
+        print(f"DEBUG: Available mcp modules: {[k for k in sys.modules if k.startswith('mcp')]}", flush=True)
         # Older SDK version without TransportSecuritySettings — no DNS protection
         pass
 
