@@ -31,7 +31,7 @@ def main():
 
     # Configure DNS rebinding protection to allow remote access
     # Tailscale handles authentication; we allow known IPs.
-    print("DEBUG: VERSION 2026-02-15-FIX-7 - HOST REWRITE ACTIVE", flush=True)
+    print("DEBUG: VERSION 2026-02-15-FIX-8 - HOST REWRITE ACTIVE", flush=True)
     try:
         # Introspect mcp object
         print(f"DEBUG: mcp object dir: {dir(mcp)}", flush=True)
