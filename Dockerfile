@@ -1,22 +1,16 @@
 # =============================================================================
-# Lasso MCP Gateway + Transport Bridge
-# Installs: supergateway (stdio→HTTP bridge) + Lasso Gateway + MCP servers
+# Lasso MCP Gateway + Streamable HTTP Transport
+# Uses only the official MCP Python SDK — no third-party transport bridge
 # =============================================================================
 
 FROM python:3.12-slim
 
 WORKDIR /app
 
-# System deps + Node.js for supergateway
+# System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
-    curl \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
-
-# Install supergateway (stdio → Streamable HTTP bridge)
-RUN npm install -g supergateway
 
 # Install Lasso MCP Gateway with presidio plugin
 RUN pip install --no-cache-dir \
@@ -29,16 +23,15 @@ RUN pip install --no-cache-dir \
     ticktick-mcp \
     "monarch-mcp-server @ git+https://github.com/robcerda/monarch-mcp-server.git"
 
+# Copy our HTTP entrypoint wrapper
+COPY http_entrypoint.py /app/http_entrypoint.py
+
 # Create log directory
 RUN mkdir -p /logs
 
 EXPOSE 8484
 
-# supergateway wraps mcp-gateway stdio → Streamable HTTP on port 8484
-CMD ["supergateway", \
-    "--transport", "streamablehttp", \
-    "--port", "8484", \
-    "--", \
-    "mcp-gateway", \
+# Run the HTTP wrapper instead of default stdio entrypoint
+CMD ["python", "/app/http_entrypoint.py", \
     "--mcp-json-path", "/config/mcp.json", \
     "--plugin", "basic"]
