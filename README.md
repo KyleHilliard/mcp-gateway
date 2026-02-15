@@ -51,6 +51,33 @@ Client (Mac Mini) ──Streamable HTTP via Tailscale──▶ Lasso Gateway (Un
 └── README.md
 ```
 
+## Configuration
+
+### `mcp.json` Structure
+
+Lasso expects a specific nested structure. The gateway itself is an entry in `mcpServers`, and the servers it proxies must be defined inside its `servers` key:
+
+```json
+{
+  "mcpServers": {
+    "mcp-gateway": {
+      "command": "mcp-gateway",
+      "args": [],
+      "servers": {
+        "monarchmoney": {
+          "command": "monarch-mcp-server",
+          "args": [],
+          "env": {
+            "MONARCH_EMAIL": "${MONARCH_EMAIL}",
+            ...
+          }
+        }
+      }
+    }
+  }
+}
+```
+
 ## Servers
 
 | Server | Description | Status |
@@ -61,7 +88,7 @@ Client (Mac Mini) ──Streamable HTTP via Tailscale──▶ Lasso Gateway (Un
 
 ## Clients
 
-All clients connect to `http://100.94.202.54:3000` (Tailscale) or `http://10.0.0.37:3000` (LAN).
+All clients connect to `http://100.94.202.54:8484` (Tailscale) or `http://10.0.0.37:8484` (LAN).
 
 | Client | Config Location |
 |---|---|

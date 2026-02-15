@@ -30,23 +30,7 @@ def main():
     try:
         from mcp.server.transport_security import TransportSecuritySettings
         mcp._transport_security = TransportSecuritySettings(
-            enable_dns_rebinding_protection=True,
-            allowed_hosts=[
-                "localhost:*",
-                "127.0.0.1:*",
-                "0.0.0.0:*",
-                "100.94.202.54:*",   # Unraid Tailscale IP
-                "10.0.0.37:*",       # Unraid LAN IP
-                "tower:*",           # Unraid hostname
-                "tower.local:*",
-            ],
-            allowed_origins=[
-                "http://localhost:*",
-                "http://127.0.0.1:*",
-                "http://100.94.202.54:*",
-                "http://10.0.0.37:*",
-                "http://tower:*",
-            ],
+            enable_dns_rebinding_protection=False
         )
     except ImportError:
         # Older SDK version without TransportSecuritySettings — no DNS protection
