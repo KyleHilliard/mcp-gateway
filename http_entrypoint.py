@@ -27,18 +27,18 @@ def main():
 
     # Configure DNS rebinding protection to allow remote access
     # Tailscale handles authentication; we allow known IPs.
+    print("DEBUG: VERSION 2026-02-15-FIX-3 - MONKEYPATCH ACTIVE")
     try:
         from mcp.server.transport_security import TransportSecuritySettings
-        # Monkeypatch: Force allow all hosts/origins (Tailscale handles auth)
+        # Monkeypatch: Force allow all hosts/origins
         TransportSecuritySettings.is_host_allowed = lambda self, host: True
         TransportSecuritySettings.is_origin_allowed = lambda self, origin: True
         
         mcp._transport_security = TransportSecuritySettings(
             enable_dns_rebinding_protection=False,
-            allowed_hosts=["*"],
+            allowed_hosts=["*", "100.94.202.54:8484"],
             allowed_origins=["*"]
         )
-        print("DEBUG: DNS Rebinding Protection DISABLED (Monkeypatched)")
     except ImportError:
         # Older SDK version without TransportSecuritySettings — no DNS protection
         pass
