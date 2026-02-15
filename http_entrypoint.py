@@ -31,20 +31,30 @@ def main():
 
     # Configure DNS rebinding protection to allow remote access
     # Tailscale handles authentication; we allow known IPs.
-    print("DEBUG: VERSION 2026-02-15-FIX-8 - HOST REWRITE ACTIVE", flush=True)
+    print("DEBUG: VERSION 2026-02-15-FIX-9 - HOST REWRITE ACTIVE", flush=True)
     try:
         # Introspect mcp object
         print(f"DEBUG: mcp object dir: {dir(mcp)}", flush=True)
         
         # Try to find the Starlette app
         app = None
-        if hasattr(mcp, '_mcp_server') and hasattr(mcp._mcp_server, 'app'):
-            app = mcp._mcp_server.app
-            print("DEBUG: Found app via _mcp_server.app", flush=True)
-        elif hasattr(mcp, '_http_app'):
-            app = mcp._http_app
-            print("DEBUG: Found app via _http_app", flush=True)
         
+        # Method 1: Check for explicit streamable_http_app property
+        if hasattr(mcp, 'streamable_http_app'):
+            # It might be a method or property
+            candidate = mcp.streamable_http_app
+            print(f"DEBUG: Found streamable_http_app: {type(candidate)}", flush=True)
+            if hasattr(candidate, 'add_middleware'):
+                app = candidate
+                print("DEBUG: Target matches Starlette app interface (has add_middleware)", flush=True)
+            
+        # Method 2: Check _mcp_server internal
+        if not app and hasattr(mcp, '_mcp_server'):
+            print(f"DEBUG: _mcp_server dir: {dir(mcp._mcp_server)}", flush=True)
+            if hasattr(mcp._mcp_server, 'app'):
+                app = mcp._mcp_server.app
+                print("DEBUG: Found app via _mcp_server.app", flush=True)
+
         if app:
              from starlette.middleware.base import BaseHTTPMiddleware
              from starlette.types import ASGIApp, Receive, Scope, Send
