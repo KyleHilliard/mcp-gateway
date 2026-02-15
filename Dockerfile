@@ -17,9 +17,11 @@ RUN pip install --no-cache-dir \
     "mcp-gateway[presidio]"
 
 # Install MCP servers that will run as stdio subprocesses
+# ticktick-mcp: available on PyPI
+# monarch-mcp-server: NOT on PyPI, install from GitHub
 RUN pip install --no-cache-dir \
-    monarch-mcp-server \
-    ticktick-mcp
+    ticktick-mcp \
+    "monarch-mcp-server @ git+https://github.com/robcerda/monarch-mcp-server.git"
 
 # Create log directory
 RUN mkdir -p /logs
