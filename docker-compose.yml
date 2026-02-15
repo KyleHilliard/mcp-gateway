@@ -20,8 +20,6 @@ services:
       - .env
     environment:
       - LOGLEVEL=INFO
-    command: >
-      --mcp-json-path /config/mcp.json --plugin basic
     networks:
       - mcp-net
     healthcheck:
