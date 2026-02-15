@@ -9,3 +9,5 @@ logs/
 
 # OS
 .DS_Store
+__pycache__
+dashboard/__pycache__/
