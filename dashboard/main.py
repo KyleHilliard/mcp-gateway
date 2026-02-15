@@ -10,9 +10,8 @@ from mcp.client.sse import sse_client
 app = FastAPI()
 
 GATEWAY_URL = os.environ.get("GATEWAY_URL", "http://localhost:8484")
-# Endpoint for SSE. If gateway is at :8484, usually /sse if explicitly mounted, 
-# but StreamableHTTP defaults might be different. Let's try /sse first.
-SSE_ENDPOINT = f"{GATEWAY_URL}/sse"
+# Endpoint for SSE. Streamable HTTP uses /mcp by default.
+SSE_ENDPOINT = f"{GATEWAY_URL}/mcp"
 
 async def fetch_tools(url: str):
     """

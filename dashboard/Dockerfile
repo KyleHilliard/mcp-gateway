@@ -1,16 +1,12 @@
-FROM python:3.12-slim
+FROM nginx:alpine
 
-WORKDIR /app
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy custom config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy application code
-COPY . .
+# Copy static frontend files
+COPY index.html /usr/share/nginx/html/index.html
 
-# Expose port (dashboard runs on 8585 internally)
-EXPOSE 8585
-
-# Start Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8585"]
+EXPOSE 80

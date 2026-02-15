@@ -57,8 +57,8 @@ def main():
         mcp.settings.host = host
         mcp.settings.port = port
         
-    print(f"Starting MCP Gateway (SSE) on {host}:{port}")
-    mcp.run(transport="sse")
+    print(f"Starting MCP Gateway (Streamable HTTP) on {host}:{port}")
+    mcp.run(transport="streamable-http")
 
 if __name__ == "__main__":
     main()
