@@ -30,7 +30,9 @@ def main():
     try:
         from mcp.server.transport_security import TransportSecuritySettings
         mcp._transport_security = TransportSecuritySettings(
-            enable_dns_rebinding_protection=False
+            enable_dns_rebinding_protection=True,
+            allowed_hosts=["*"],
+            allowed_origins=["*"]
         )
     except ImportError:
         # Older SDK version without TransportSecuritySettings — no DNS protection
