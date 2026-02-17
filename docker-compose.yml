@@ -33,19 +33,6 @@ services:
       retries: 3
       start_period: 15s
 
-  dashboard:
-    build: ./dashboard
-    container_name: mcp-dashboard
-    restart: unless-stopped
-    ports:
-      - "8585:8585"
-    environment:
-      - GATEWAY_URL=http://mcp-gateway:8484
-    depends_on:
-      - mcp-gateway
-    networks:
-      - mcp-net
-
 networks:
   mcp-net:
     driver: bridge

@@ -2,7 +2,7 @@
 
 Centralized MCP (Model Context Protocol) server gateway using [Lasso MCP Gateway](https://github.com/lasso-security/mcp-gateway).
 
-Runs as a Docker container on Unraid, accessible to all AI clients (Claude Code, Claude Desktop, Antigravity) via Tailscale.
+Runs as a Docker container on Unraid, accessible to all AI clients (Codex, Claude Code, Claude Desktop) via Tailscale.
 
 ## Quick Start
 
@@ -20,6 +20,33 @@ docker compose up -d --build
 # 4. Check status
 docker compose logs -f mcp-gateway
 ```
+
+## Connectivity
+
+* **Host**: `tower` (LAN: `10.0.0.37` | Tailscale: `100.94.202.54`)
+* **Port**: `8484`
+* **SSE Endpoint**: `http://<host>:8484/sse`
+
+### Connect via Codex / Claude Desktop
+
+To connect your Mac client to this gateway, edit your configuration file (e.g., `~/Library/Application Support/Claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "unraid-gateway": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sse",
+        "http://10.0.0.37:8484/sse"
+      ]
+    }
+  }
+}
+```
+
+> **Note**: Replace `10.0.0.37` with the Tailscale IP (`100.94.202.54`) if connecting remotely.
 
 ## Architecture
 
@@ -44,61 +71,13 @@ Client (Mac Mini) ──Streamable HTTP via Tailscale──▶ Lasso Gateway (Un
 ├── .env                   # Real secrets (GITIGNORED)
 ├── .gitignore
 ├── configs/               # Per-server config overrides
-│   ├── monarchmoney/
-│   └── ticktick/
-├── docs/
-│   └── unraid-setup.md    # Unraid-specific deployment guide
+├── docs/                  # Documentation
 └── README.md
 ```
 
-## Configuration
-
-### `mcp.json` Structure
-
-Lasso expects a specific nested structure. The gateway itself is an entry in `mcpServers`, and the servers it proxies must be defined inside its `servers` key:
-
-```json
-{
-  "mcpServers": {
-    "mcp-gateway": {
-      "command": "mcp-gateway",
-      "args": [],
-      "servers": {
-        "monarchmoney": {
-          "command": "monarch-mcp-server",
-          "args": [],
-          "env": {
-            "MONARCH_EMAIL": "${MONARCH_EMAIL}",
-            ...
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-## Servers
-
-| Server | Description | Status |
-|---|---|---|
-| monarchmoney | Monarch Money personal finance API | ✅ Configured |
-| ticktick | TickTick task management API | ✅ Configured |
-| fabric-mcp | Fabric AI framework bridge | 🔜 Phase 2 (needs Tailscale) |
-
-## Clients
-
-All clients connect to `http://100.94.202.54:8484` (Tailscale) or `http://10.0.0.37:8484` (LAN).
-
-| Client | Config Location |
-|---|---|
-| Claude Code | `~/.claude.json` |
-| Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Antigravity | TBD |
-
 ## Security
 
-- Credentials stored in `.env` on gateway host only (never in client configs)
-- Lasso `basic` plugin: masks sensitive tokens in responses
-- Lasso `presidio` plugin: PII detection and redaction
-- Network access via Tailscale (authenticated mesh)
+* Credentials stored in `.env` on gateway host only.
+* Lasso `basic` plugin: masks sensitive tokens in responses.
+* Lasso `presidio` plugin: PII detection and redaction.
+* **DNS Rebinding**: A monkeypatch in `http_entrypoint.py` allows connections from Tailscale/LAN IPs.
